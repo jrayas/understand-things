@@ -3,7 +3,7 @@ import { pagesList } from "../pagesList";
 
 export default function Breadcrumbs() {
   const { pathname } = useLocation();
-  const page = pagesList.find((p) => p.path === pathname);
+  const page = pagesList.find((p) => p.path.toLowerCase() === pathname.toLowerCase());
   return (
     <nav className="breadcrumbs" aria-label="Breadcrumb">
       <ol>

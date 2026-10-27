@@ -12,7 +12,7 @@ export default function Layout() {
 
   // Tab title and scroll position update on every page change.
   useEffect(() => {
-    const page = pagesList.find((p) => p.path === pathname);
+    const page = pagesList.find((p) => p.path.toLowerCase() === pathname.toLowerCase());
     document.title = page ? `${page.title} | ${SITE_NAME}` : pathname === "/" ? SITE_NAME : `Page not found | ${SITE_NAME}`;
     window.scrollTo(0, 0);
   }, [pathname]);

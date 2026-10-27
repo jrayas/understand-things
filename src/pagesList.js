@@ -18,6 +18,15 @@ export const pagesList = [
     date: "2026-10-27",
     component: lazy(() => import("./pages/LogseqTutorial")),
   },
+  {
+    title: "Notion tutorial",
+    path: "/notion",
+    description: "Learn Notion step by step, from first blocks to relational databases and formulas.",
+    tags: ["notion", "tutorial", "productivity", "notes"],
+    keywords: ["plan", "second brain", "block", "database", "formula"], // extra words for search
+    date: "2026-10-28",
+    component: lazy(() => import("./pages/NotionTutorial")),
+  },
 
   // {
   //   title: "Habit tracker",
