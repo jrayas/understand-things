@@ -86,6 +86,15 @@ const CSS = `
 .nt-out{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
 .nt-del{background:none;border:0;cursor:pointer;color:var(--soft);font-size:16px;padding:2px 6px;border-radius:5px}
 .nt-ref{font-size:14px;color:var(--soft);columns:2 220px}
+.nt-cs{margin:0}
+.nt-cs-h{font-size:20px;margin:0 0 2px;line-height:1.2}
+.nt-cs-row{display:grid;grid-template-columns:minmax(120px,170px) 1fr;gap:4px 14px;padding:10px 0;border-top:1px solid var(--line)}
+.nt-cs-row dt{font-weight:600}
+.nt-cs-row dd{margin:0;font-size:15px}
+.nt-cs-row .nt-keys{margin:6px 0 0}
+.nt-cs-stage{display:table;margin-top:4px;font-size:12px}
+.nt-cs-go{background:none;border:0;padding:0;margin-top:4px;color:var(--teal);font-weight:600;font-size:14px;cursor:pointer;display:block}
+@media (max-width:520px){.nt-cs-row{grid-template-columns:1fr}}
 .nt-ref code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--ink)}
 `;
 
@@ -961,7 +970,141 @@ const EXTRA_STEPS = {
 
 LEVELS.forEach((l) => l.steps.push(...(EXTRA_STEPS[l.id] || [])));
 
-const TOOL_TABS = ["Database sandbox", "Formula playground"];
+const TOOL_TABS = ["Database sandbox", "Formula playground", "Cheatsheet"];
+
+/* ---------------- Cheatsheet (one entry per step; links by step title) ---------------- */
+
+const CHEATSHEET = {
+  novice: [
+    { term: "Block menu", detail: "Type / on an empty line, then the block’s name.", keys: [["/", "block menu"], ["Cmd + Option + 1", "Heading 1 on Mac"], ["Ctrl + Shift + 1", "Heading 1 on Windows"]], step: "Everything is a block" },
+    { term: "To-do", detail: "[] then Space makes a checkbox.", keys: [["Ctrl/Cmd + Enter", "tick / untick"]], step: "Make a to-do in two keystrokes" },
+    { term: "Page link", detail: "[[ to link a page; @ to mention a page, person or date.", keys: [["Ctrl/Cmd + K", "link selected text"]], step: "Link to another page" },
+    { term: "Table database", detail: "/table → Table view. Rows are pages; columns are properties.", step: "Create a table database" },
+    { term: "Property", detail: "Click + at the end of the header row and choose a type (Text, Number, Date…).", step: "Add a property" },
+    { term: "Sub-page", detail: "/page creates a page inside the current one.", keys: [["Ctrl/Cmd + N", "new page"]], step: "Make a page inside a page" },
+    { term: "Indent", detail: "Nest a block under the one above.", keys: [["Tab", "indent"], ["Shift + Tab", "outdent"]], step: "Indent to nest blocks" },
+    { term: "Move a block", detail: "Drag the ⋮⋮ handle, or use the keyboard.", keys: [["Ctrl/Cmd + Shift + ↑/↓", "move up / down"]], step: "Move a block" },
+    { term: "Toggle", detail: "> then Space makes a collapsible block.", step: "Fold content with a toggle" },
+    { term: "Search", detail: "Find any page by name or content.", keys: [["Ctrl/Cmd + P", "search"], ["Ctrl/Cmd + [", "back"], ["Ctrl/Cmd + ]", "forward"]], step: "Find anything with search" },
+    { term: "Select vs Multi-select", detail: "Select = one option per row. Multi-select = several.", step: "Select or multi-select" },
+    { term: "First formula", detail: "prop(\"Hours\") * 60 — names must match exactly.", step: "Your first formula" },
+  ],
+  advbeg: [
+    { term: "Page or database", detail: "One-off writing → page. Many similar items to sort or count → database.", step: "Page or database?" },
+    { term: "Views", detail: "Table to edit, Board for stages, Calendar for days, Gallery for images, Timeline for spans.", step: "Pick the right view" },
+    { term: "Mention vs relation", detail: "@mention points once; a relation links rows both ways and can be rolled up.", step: "Mention or relation?" },
+    { term: "Templates", detail: "Database template for repeat pages in a database; /button for blocks anywhere.", step: "Which kind of template?" },
+    { term: "Status / Select / Checkbox", detail: "Stages → Status. Unordered categories → Select. Yes/no → Checkbox.", step: "Status, select or checkbox?" },
+    { term: "Wiki pages", detail: "Long prose read top to bottom → nested pages; add a database when metadata matters.", step: "A handbook of chapters" },
+    { term: "Linked view", detail: "/linked shows an existing database elsewhere with its own filters.", step: "Show a database somewhere else" },
+    { term: "Filter, sort, group", detail: "Filter hides, sort orders, group makes labelled sections.", step: "Filter, sort or group?" },
+    { term: "Toggles for FAQs", detail: "Hide answers until needed; callouts are for emphasis.", step: "Help readers find one answer" },
+    { term: "Synced block", detail: "Same content on many pages; edit once. Copy → “Paste and sync”.", step: "Same content, many pages" },
+    { term: "Guests", detail: "Invite to specific pages only; members see the workspace.", step: "Share just one page" },
+    { term: "Calendar vs Timeline", detail: "Single days → Calendar. Overlapping date ranges → Timeline.", step: "Calendar or timeline?" },
+  ],
+  competent: [
+    { term: "Overdue view", detail: "Filter Due before today AND Status is not Done — or a reusable formula.", step: "Plan: show only what’s overdue" },
+    { term: "Progress rollup", detail: "Relation + rollup “Percent checked”, or a formula over the relation.", step: "Plan: progress on every project" },
+    { term: "Combined condition", detail: "if(a && !b, \"Late\", \"\") or nested if()s.", step: "Write a “Late” flag" },
+    { term: "Finish date", detail: "Automation (Status → Done sets date), a button, or Last edited time.", step: "Plan: stamp the finish date" },
+    { term: "Home dashboard", detail: "Filtered linked views + a quick-capture button.", step: "Plan: a personal home page" },
+    { term: "Score from Select", detail: "Nested if() mapping High/Medium/Low to 3/2/1.", step: "Turn priority into a score" },
+    { term: "Group or relate", detail: "Select + group for quick counts; a related database when items need their own pages.", step: "Plan: a reading list by author" },
+    { term: "Joining text", detail: "+ or concat(); numbers turn into text when joined.", step: "Build a label" },
+    { term: "Self-filtering template", detail: "Database template with a linked view filtered to the current page.", step: "Plan: client onboarding" },
+    { term: "Archiving", detail: "Filter Done out of views (links survive) or move to an Archive database.", step: "Plan: tidy away finished work" },
+    { term: "Boundaries", detail: ">= includes the edge value; > doesn’t. Test the edge row.", step: "Big or small job?" },
+    { term: "Permissions", detail: "Page-level access and guests for small teams; teamspaces as you grow.", step: "Plan: who can see what" },
+  ],
+  proficient: [
+    { term: "Slow pages", detail: "Filter default views first; archive old rows; trim heavy rollups.", step: "The tasks page crawls" },
+    { term: "One vocabulary", detail: "Standardise on Status with the same groups everywhere.", step: "Three ways to say “done”" },
+    { term: "Read the error", detail: "Missing commas and brackets cause most formula errors; count from the outside in.", step: "Fix a broken formula" },
+    { term: "Findability", detail: "One Home hub, stray pages under it, duplicate notes merged.", step: "Where did that page go?" },
+    { term: "Wrong totals", detail: "Check which relation a rollup uses and look for duplicate links.", step: "The budget doubled overnight" },
+    { term: "Errors hide errors", detail: "Fix one, re-run, read the next. Property names are case-sensitive.", step: "Two bugs in one line" },
+    { term: "Alert fatigue", detail: "Narrow automation triggers to events that need action.", step: "The channel everyone muted" },
+    { term: "Single source", detail: "One canonical template; delete the copies.", step: "Five versions of one template" },
+    { term: "Property bloat", detail: "Audit, hide or delete unused fields; templates per task type.", step: "46 properties, mostly empty" },
+    { term: "Readable boards", detail: "Filter to current work; show two or three card properties.", step: "The board nobody opens" },
+    { term: "Relation map", detail: "Keep core entities and essential relations; drop decorative ones.", step: "Everything relates to everything" },
+    { term: "Order of operations", detail: "* and / before + and −; add brackets: (a + 1) * 60.", step: "The buffer that didn’t add up" },
+  ],
+  expert: [
+    { term: "Design from the brief", detail: "Start with the people and questions, then the databases.", step: "Design a system of your own" },
+    { term: "Know the limits", detail: "Deep relation chains, very large data, offline work and inherited permissions.", step: "When the rules break" },
+    { term: "Teach it back", detail: "Explaining exposes gaps; share with the community.", step: "Explain it in your own words" },
+    { term: "Courses & grades", detail: "Courses ↔ Assignments relation; rollups for running grades.", step: "A student’s semester" },
+    { term: "Goals that roll up", detail: "Objectives ↔ Key results; average progress with a rollup.", step: "Team goals that roll up" },
+    { term: "Formula limits", detail: "Formulas can’t remember the past — use an automation or a stored property.", step: "When a formula is the wrong tool" },
+    { term: "Scaling", detail: "Owners per database, naming rules, teamspaces, canonical templates.", step: "From three people to fifty" },
+    { term: "Shareable templates", detail: "Usable without instructions; remove anything optional.", step: "Make a template to share" },
+    { term: "Database vs view", detail: "One set of data; many ways of looking at it.", step: "Views vs databases" },
+    { term: "Choosing a mechanism", detail: "Formula = calculate now. Button = on demand. Automation = on an event.", step: "Automation, button or formula?" },
+    { term: "Critique", detail: "Use it for a day, then note what helps and what gets in the way.", step: "Review someone else’s template" },
+    { term: "Deliberate practice", detail: "Build, share, get feedback: r/Notion, the forum, meet-ups.", step: "Your practice plan" },
+  ],
+};
+
+const CS_TOPICS = [
+  { title: "Blocks & writing", intro: "Making, shaping and moving the building blocks of every page.", terms: ["Block menu", "To-do", "Indent", "Move a block", "Toggle", "Toggles for FAQs", "Synced block"] },
+  { title: "Pages & navigation", intro: "Organising pages and finding your way around.", terms: ["Page link", "Sub-page", "Search", "Page or database", "Wiki pages", "Findability"] },
+  { title: "Databases & properties", intro: "Collections of pages that share the same information.", terms: ["Table database", "Property", "Select vs Multi-select", "Status / Select / Checkbox", "Property bloat", "One vocabulary"] },
+  { title: "Views", intro: "Different ways of looking at the same data.", terms: ["Views", "Linked view", "Calendar vs Timeline", "Database vs view", "Readable boards"] },
+  { title: "Filters, sorts & groups", intro: "Showing the right rows, in the right order.", terms: ["Filter, sort, group", "Overdue view", "Archiving", "Slow pages", "Home dashboard"] },
+  { title: "Relations & rollups", intro: "Connecting databases and summarising across them.", terms: ["Mention vs relation", "Progress rollup", "Group or relate", "Wrong totals", "Relation map", "Courses & grades", "Goals that roll up"] },
+  { title: "Formula basics", intro: "Calculating a value for every row.", terms: ["First formula", "Joining text", "Score from Select", "Boundaries"] },
+  { title: "Formula logic & debugging", intro: "Conditions, errors and the limits of formulas.", terms: ["Combined condition", "Read the error", "Errors hide errors", "Order of operations", "Formula limits"] },
+  { title: "Templates", intro: "Starting new pages the same way every time.", terms: ["Templates", "Self-filtering template", "Single source", "Shareable templates"] },
+  { title: "Automations & buttons", intro: "Making things happen without typing them.", terms: ["Finish date", "Alert fatigue", "Choosing a mechanism"] },
+  { title: "Sharing & permissions", intro: "Who can see and edit what.", terms: ["Guests", "Permissions", "Scaling"] },
+  { title: "Growing as an expert", intro: "Designing, teaching and practising.", terms: ["Design from the brief", "Know the limits", "Teach it back", "Critique", "Deliberate practice"] },
+];
+
+const CS_LOOKUP = {};
+LEVELS.forEach((l, li) => (CHEATSHEET[l.id] || []).forEach((e) => {
+  CS_LOOKUP[e.term] = { ...e, li, si: l.steps.findIndex((s) => s.title === e.step) };
+}));
+
+function Cheatsheet({ page, setPage, onGo }) {
+  const topic = CS_TOPICS[page];
+  const last = page === CS_TOPICS.length - 1;
+  return (
+    <div className="nt-step" key={`cs-${page}`}>
+      {page === 0 && <div className="nt-mind">Reference — every stage, sorted by topic</div>}
+      <p className="nt-label">Cheatsheet</p>
+      <h2 className="nt-title">{topic.title}</h2>
+      <p className="nt-p">{topic.intro}</p>
+      <div className="nt-card">
+        <dl className="nt-cs">
+          {topic.terms.map((t) => {
+            const e = CS_LOOKUP[t];
+            if (!e) return null;
+            return (
+              <div key={t} className="nt-cs-row">
+                <dt>{e.term}<span className="nt-chip nt-cs-stage">{LEVELS[e.li].name}</span></dt>
+                <dd>
+                  {e.detail}
+                  {e.keys && <Keys keys={e.keys} />}
+                  {e.si >= 0 && (
+                    <button className="nt-cs-go" onClick={() => onGo(e.li, e.si)} aria-label={`Go to step: ${e.step}`}>Go to step {e.si + 1} in {LEVELS[e.li].name}</button>
+                  )}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+      </div>
+      <div className="nt-nav">
+        <button className="nt-btn" onClick={() => setPage(page - 1)} disabled={page === 0}>Back</button>
+        {!last && <button className="nt-btn pri" onClick={() => setPage(page + 1)}>Next</button>}
+        {last && <button className="nt-btn pri" onClick={() => onGo(0, 0)}>Back to Novice</button>}
+      </div>
+      <p className="nt-meta" style={{ marginTop: 12 }}>Tip: use the ← and → arrow keys to move between pages.</p>
+    </div>
+  );
+}
 
 /* ---------------- Small components ---------------- */
 
@@ -1347,7 +1490,10 @@ export default function NotionTutorial() {
   const [answers, setAnswers] = useState({});
   const [db, setDb] = useState({ rows: START_DB, view: "Table", filter: "All", sort: "none", draft: { name: "", status: "To do", priority: "Medium", due: "2026-11-30" } });
   const [formula, setFormula] = useState('if(prop("Done"), "✓", concat(format(prop("Hours")), " h to go"))');
+  const [csPage, setCsPage] = useState(0);
   const contentRef = useRef(null);
+  const isCs = tab === LEVELS.length + 2;
+  const goCs = (i) => setCsPage(Math.max(0, Math.min(CS_TOPICS.length - 1, i)));
 
   const isLevel = tab < LEVELS.length;
   const level = isLevel ? LEVELS[tab] : null;
@@ -1365,6 +1511,11 @@ export default function NotionTutorial() {
       const t = e.target;
       if (t && (["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isCs) {
+        if (e.key === "ArrowRight") goCs(csPage + 1);
+        if (e.key === "ArrowLeft") goCs(csPage - 1);
+        return;
+      }
       if (!isLevel) return;
       if (e.key === "ArrowRight") goStep(si + 1);
       if (e.key === "ArrowLeft") goStep(si - 1);
@@ -1383,6 +1534,7 @@ export default function NotionTutorial() {
       <div className="nt-head">
         <b>Notion · learning island</b>
         {isLevel && <span className="nt-count">Step {si + 1} of {level.steps.length}</span>}
+        {isCs && <span className="nt-count">Step {csPage + 1} of {CS_TOPICS.length}</span>}
       </div>
 
       <div className="nt-tabs" role="tablist" aria-label="Stages and tools">
@@ -1402,6 +1554,15 @@ export default function NotionTutorial() {
           {level.steps.map((s, i) => (
             <button key={i} role="tab" aria-selected={i === si} aria-label={`Step ${i + 1}: ${s.title}`}
               className={"nt-seg" + (i <= si ? " on" : "")} onClick={() => goStep(i)} />
+          ))}
+        </div>
+      )}
+
+      {isCs && (
+        <div className="nt-rail" role="tablist" aria-label="Cheatsheet pages">
+          {CS_TOPICS.map((t, i) => (
+            <button key={i} role="tab" aria-selected={i === csPage} aria-label={`Page ${i + 1}: ${t.title}`}
+              className={"nt-seg" + (i <= csPage ? " on" : "")} onClick={() => goCs(i)} />
           ))}
         </div>
       )}
@@ -1433,6 +1594,9 @@ export default function NotionTutorial() {
         )}
         {tab === LEVELS.length && <DbSandbox db={db} setDb={setDb} />}
         {tab === LEVELS.length + 1 && <FormulaPlayground src={formula} setSrc={setFormula} />}
+        {tab === LEVELS.length + 2 && (
+          <Cheatsheet page={csPage} setPage={goCs} onGo={(li, si) => { setStepIdx((arr) => arr.map((v, k) => (k === li ? si : v))); setTab(li); }} />
+        )}
       </div>
     </div>
   );
